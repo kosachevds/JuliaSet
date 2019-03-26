@@ -71,7 +71,7 @@ namespace JuliaSet
                 255,
                 Convert.ToByte(255 * countRatio),
                 Convert.ToByte(255 * (1 - countRatio)),
-                Convert.ToByte(255 * Math.Max(1, ratioZR))
+                Convert.ToByte(255 * Math.Min(1, ratioZR))
             );
         }
     }
