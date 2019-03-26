@@ -10,7 +10,7 @@ namespace JuliaSet
 
         public Complex CValue { get; }
 
-        public JuliaSet(double cValue)
+        public JuliaSet(Complex cValue)
         {
             this.CValue = cValue;
         }
