@@ -1,3 +1,4 @@
+using System;
 using System.Numerics;
 
 namespace JuliaSet
@@ -14,6 +15,11 @@ namespace JuliaSet
         public void Create(string filename, int maxIteration, int width, int height)
         {
 
+        }
+
+        private Complex ComputeRValue()
+        {
+            return (1 + Math.Sqrt(1 + 4 * Complex.Abs(this.CValue))) / 2
         }
     }
 }
