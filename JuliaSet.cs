@@ -11,5 +11,9 @@ namespace JuliaSet
             this.CValue = cValue;
         }
 
+        public void Create(string filename, int maxIteration, int width, int height)
+        {
+
+        }
     }
 }
