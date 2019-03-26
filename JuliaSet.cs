@@ -17,9 +17,9 @@ namespace JuliaSet
 
         }
 
-        private Complex ComputeRValue()
+        private double ComputeRValue()
         {
-            return (1 + Math.Sqrt(1 + 4 * Complex.Abs(this.CValue))) / 2
+            return (1 + Math.Sqrt(1 + 4 * Complex.Abs(this.CValue))) / 2;
         }
     }
 }
