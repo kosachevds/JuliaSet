@@ -17,7 +17,9 @@ namespace JuliaSet
 
         public void Create(string filename, int maxIteration, int width, int height)
         {
-
+            var bitmap = new Bitmap(width, height);
+            PlotOnBitmap(bitmap, maxIteration);
+            bitmap.Save(filename);
         }
 
         private void PlotOnBitmap(Bitmap bitmap, int maxIteration)
