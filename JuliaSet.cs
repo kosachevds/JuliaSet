@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
+using System.Threading;
 
 namespace JuliaSet
 {
@@ -34,17 +36,34 @@ namespace JuliaSet
             var imagMax = rValue;
             var imapStep = (imagMax - imagMin) / bitmap.Height;
 
-            for (int i = 0; i < bitmap.Width; ++i) {
-                var xCoordinate = bitmap.Width - i - 1;
-                var real = realMin + i * realStep;
-                for (int j = 0; j < bitmap.Height; ++j) {
-                    var imag = realMin + j * imapStep;
-                    var zij = new Complex(real, imag);
-                    var count = CountIterations(ref zij, maxIteration, rValue);
-                    var ratioZR = Complex.Abs(zij) / rValue;
-                    bitmap.SetPixel(xCoordinate, j, GetColor(count, maxIteration, ratioZR));
-                }
+            int width = bitmap.Width;
+            int height = bitmap.Height;
+
+            var threads = new List<Thread>(MaxThreadCount);
+            for (int threadId = 0; threadId < MaxThreadCount; ++threadId) {
+                var localThreadId = threadId;
+                threads.Add(new Thread(() => {
+                    for (int i = 0; i < width; ++i) {
+                        if (i % MaxThreadCount != localThreadId) {
+                            continue;
+                        }
+                        var xCoordinate = width - i - 1;
+                        var real = realMin + i * realStep;
+                        for (int j = 0; j < height; ++j) {
+                            var imag = realMin + j * imapStep;
+                            var zij = new Complex(real, imag);
+                            var count = CountIterations(ref zij, maxIteration, rValue);
+                            var ratioZR = Complex.Abs(zij) / rValue;
+                            lock (bitmap)
+                            {
+                                bitmap.SetPixel(xCoordinate, j, GetColor(count, maxIteration, ratioZR));
+                            }
+                        }
+                    }
+                }));
             }
+            threads.ForEach(x => x.Start());
+            threads.ForEach(x => x.Join());
         }
 
         private int CountIterations(ref Complex initialZ, int maxIteration, double rValue)
