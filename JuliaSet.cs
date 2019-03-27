@@ -2,13 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
-using System.Threading;
+using System.Threading.Tasks;
 
 namespace JuliaSet
 {
     class JuliaSet
     {
-        private const int MaxThreadCount = 12;
+        private const int MaxTaskCount = 12;
 
         public Complex CValue { get; }
 
@@ -39,12 +39,12 @@ namespace JuliaSet
             int width = bitmap.Width;
             int height = bitmap.Height;
 
-            var threads = new List<Thread>(MaxThreadCount);
-            for (int threadId = 0; threadId < MaxThreadCount; ++threadId) {
-                var localThreadId = threadId;
-                threads.Add(new Thread(() => {
+            var tasks = new List<Task>(MaxTaskCount);
+            for (int taskId = 0; taskId < MaxTaskCount; ++taskId) {
+                var localTaskId = taskId;
+                tasks.Add(Task.Run(() => {
                     for (int i = 0; i < width; ++i) {
-                        if (i % MaxThreadCount != localThreadId) {
+                        if (i % MaxTaskCount != localTaskId) {
                             continue;
                         }
                         var xCoordinate = width - i - 1;
@@ -62,8 +62,7 @@ namespace JuliaSet
                     }
                 }));
             }
-            threads.ForEach(x => x.Start());
-            threads.ForEach(x => x.Join());
+            tasks.ForEach(x => x.Wait());
         }
 
         private int CountIterations(ref Complex initialZ, int maxIteration, double rValue)
