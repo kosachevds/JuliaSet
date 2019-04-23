@@ -1,7 +1,9 @@
 using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using System.Numerics;
+using System.Threading;
 using System.Threading.Tasks;
 
 namespace JuliaSet
@@ -39,14 +41,13 @@ namespace JuliaSet
             int width = bitmap.Width;
             int height = bitmap.Height;
 
-            var tasks = new List<Task>(MaxTaskCount);
+            var tasks = new Task[MaxTaskCount];
+            var pixelsPerTask = width / MaxTaskCount;
             for (int taskId = 0; taskId < MaxTaskCount; ++taskId) {
-                var localTaskId = taskId;
-                tasks.Add(Task.Run(() => {
-                    for (int i = 0; i < width; ++i) {
-                        if (i % MaxTaskCount != localTaskId) {
-                            continue;
-                        }
+                var firstColumn = taskId * pixelsPerTask;
+                var lastColumn = firstColumn + pixelsPerTask;
+                tasks[taskId] = Task.Run(() => {
+                    for (int i = firstColumn; i < lastColumn; ++i) {
                         var xCoordinate = width - i - 1;
                         var real = realMin + i * realStep;
                         for (int j = 0; j < height; ++j) {
@@ -54,15 +55,16 @@ namespace JuliaSet
                             var zij = new Complex(real, imag);
                             var count = CountIterations(ref zij, maxIteration, rValue);
                             var ratioZR = Complex.Abs(zij) / rValue;
+                            var color = GetColor(count, maxIteration, ratioZR);
                             lock (bitmap)
                             {
-                                bitmap.SetPixel(xCoordinate, j, GetColor(count, maxIteration, ratioZR));
+                                bitmap.SetPixel(xCoordinate, j, color);
                             }
                         }
                     }
-                }));
+                });
             }
-            tasks.ForEach(x => x.Wait());
+            Task.WaitAll(tasks);
         }
 
         private int CountIterations(ref Complex initialZ, int maxIteration, double rValue)
