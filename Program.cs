@@ -7,15 +7,15 @@ namespace JuliaSet
     {
         static void Main(string[] args)
         {
-            var juliaSet = new JuliaSet(new System.Numerics.Complex(-0.8, 0.156));
+            var juliaSet = new JuliaSet(new System.Numerics.Complex(-0.74543, 0.11301));
             var sw = new Stopwatch();
 
+            Console.WriteLine("Working...");
             sw.Start();
-            juliaSet.Create("juliaSet.bmp", 100, 5000, 5000);
+            juliaSet.Create("juliaSet.bmp", 500, 10000, 10000);
             sw.Stop();
 
-            Console.WriteLine("Elapsed: {0}, sec", sw.ElapsedMilliseconds / 1000.0);
-
+            Console.WriteLine("Elapsed, ms: {0}", sw.ElapsedMilliseconds);
         }
     }
 }
