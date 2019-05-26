@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel;
+using System.Drawing;
 using System.Numerics;
 using System.Windows.Forms;
 
@@ -7,7 +8,6 @@ namespace Gui
 {
     public partial class MainForm : Form
     {
-        private const string BitmapFilename = "temp.bmp";
         private readonly BackgroundWorker setCreator;
 
         public MainForm()
@@ -21,13 +21,19 @@ namespace Gui
         private void AfterSetCreation(object sender, RunWorkerCompletedEventArgs e)
         {
             this.btnCreate.Enabled = true;
+            var bitmap = (Bitmap) e.Result;
+            var filename = this.SelectFilenameWithDialog();
+            if (!String.IsNullOrEmpty(filename))
+            {
+                bitmap.Save(filename);
+            }
         }
 
         private void CreateJuliaSet(object sender, DoWorkEventArgs e)
         {
             var parameters = (JuliaSetParameters) e.Argument;
             var juliaSet = new JuliaSet.JuliaSet(parameters.CValue);
-            juliaSet.Create(MainForm.BitmapFilename, parameters.MaxIteration, parameters.Width, parameters.Height);
+            e.Result = juliaSet.Create(parameters.MaxIteration, parameters.Width, parameters.Height);
         }
 
         private void btnCreate_Click(object sender, EventArgs e)
@@ -90,6 +96,28 @@ namespace Gui
         private int GetMaxIteration()
         {
             return (int) ParseUIntControl(this.tbMaxIteration, "Max Iteration");
+        }
+
+        private string SelectFilenameWithDialog()
+        {
+            using (var dialog = CreateBmpFileDialog())
+            {
+                if (dialog.ShowDialog(this) == DialogResult.OK)
+                {
+                    return dialog.FileName;
+                }
+            }
+            return String.Empty;
+        }
+
+        private static SaveFileDialog CreateBmpFileDialog()
+        {
+            return new SaveFileDialog
+            {
+                Filter = "Bitmap Images | *.bmp",
+                RestoreDirectory = true,
+                InitialDirectory = AppDomain.CurrentDomain.BaseDirectory
+            };
         }
 
         private static int ParseSizeControl(Control control)

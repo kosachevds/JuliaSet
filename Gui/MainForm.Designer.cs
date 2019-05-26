@@ -147,7 +147,7 @@
             // 
             // btnCreate
             // 
-            this.btnCreate.Location = new System.Drawing.Point(82, 107);
+            this.btnCreate.Location = new System.Drawing.Point(101, 98);
             this.btnCreate.Name = "btnCreate";
             this.btnCreate.Size = new System.Drawing.Size(75, 23);
             this.btnCreate.TabIndex = 11;
@@ -159,7 +159,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(274, 143);
+            this.ClientSize = new System.Drawing.Size(274, 132);
             this.Controls.Add(this.btnCreate);
             this.Controls.Add(this.tbHeight);
             this.Controls.Add(this.label6);
