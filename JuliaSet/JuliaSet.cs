@@ -1,18 +1,15 @@
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using System.Numerics;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace JuliaSet
 {
-    class JuliaSet
+    public class JuliaSet
     {
         private const int MaxTaskCount = 12;
 
-        public Complex CValue { get; }
+        private Complex CValue { get; }
 
         public JuliaSet(Complex cValue)
         {
