@@ -32,8 +32,22 @@ namespace Gui
 
         private void btnCreate_Click(object sender, EventArgs e)
         {
+            JuliaSetParameters parameters;
+            try
+            {
+                parameters = this.GetParameters();
+            }
+            catch (ParsingParameterException exc)
+            {
+                ShowErrorMessageBox("Bad parameter format: " + exc.ParameterName);
+                return;
+            }
+            catch (Exception exc)
+            {
+                ShowErrorMessageBox(exc.Message);
+                return;
+            }
             this.btnCreate.Enabled = false;
-            var parameters = this.GetParameters();
             this.setCreator.RunWorkerAsync(parameters);
         }
 
@@ -50,38 +64,60 @@ namespace Gui
 
         private Complex GetComplexParameter()
         {
-            return new Complex(
-                Double.Parse(this.tbReal.Text),
-                Double.Parse(this.tbImag.Text)
+            try
+            {
+                return new Complex(
+                    Double.Parse(this.tbReal.Text),
+                    Double.Parse(this.tbImag.Text)
                 );
+            }
+            catch (FormatException)
+            {
+                throw new ParsingParameterException("Complex parameter");
+            }
         }
 
         private int GetHeight()
         {
-            return ParseSizeControl(tbHeight);
+            return ParseSizeControl(this.tbHeight);
         }
 
         private int GetWidth()
         {
-            return ParseSizeControl(tbWidth);
+            return ParseSizeControl(this.tbWidth);
         }
 
         private int GetMaxIteration()
         {
-            return (int) ParseUIntControl(this.tbMaxIteration);
+            return (int) ParseUIntControl(this.tbMaxIteration, "Max Iteration");
         }
 
         private static int ParseSizeControl(Control control)
         {
-            return (int) ParseUIntControl(control);
+            return (int) ParseUIntControl(control, "Image size");
         }
 
-        private static uint ParseUIntControl(Control control)
+        private static uint ParseUIntControl(Control control, string parameterName)
         {
-            return UInt32.Parse(control.Text);
+            try
+            {
+                return UInt32.Parse(control.Text);
+            }
+            catch (FormatException)
+            {
+                throw new ParsingParameterException(parameterName);
+            }
         }
 
-
+        private static void ShowErrorMessageBox(string text)
+        {
+            MessageBox.Show(
+                text,
+                "Error!",
+                MessageBoxButtons.OK,
+                MessageBoxIcon.Error
+                );
+        }
 
     }
 }
