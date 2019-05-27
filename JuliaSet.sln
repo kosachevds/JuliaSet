@@ -5,7 +5,7 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuliaSet", "JuliaSet\JuliaSet.csproj", "{3E4A60E7-7C92-4BDC-B2CD-34B0727B7597}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Gui", "Gui\Gui.csproj", "{AB89E61C-9490-4A6D-A720-8EF29E8475FF}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "JuliaSet.Gui", "Gui\JuliaSet.Gui.csproj", "{AB89E61C-9490-4A6D-A720-8EF29E8475FF}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
