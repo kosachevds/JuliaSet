@@ -13,6 +13,7 @@ namespace Gui
         public MainForm()
         {
             InitializeComponent();
+            this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.setCreator = new BackgroundWorker();
             this.setCreator.DoWork += CreateJuliaSet;
             this.setCreator.RunWorkerCompleted += AfterSetCreation;
