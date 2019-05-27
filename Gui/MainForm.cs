@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel;
 using System.Drawing;
+using System.Globalization;
 using System.Numerics;
 using System.Windows.Forms;
 
@@ -74,8 +75,8 @@ namespace Gui
             try
             {
                 return new Complex(
-                    Double.Parse(this.tbReal.Text),
-                    Double.Parse(this.tbImag.Text)
+                    ParseDoubleWithBothDelimiters(this.tbReal.Text),
+                    ParseDoubleWithBothDelimiters(this.tbImag.Text)
                 );
             }
             catch (FormatException)
@@ -146,6 +147,12 @@ namespace Gui
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Error
                 );
+        }
+
+        private static double ParseDoubleWithBothDelimiters(string text)
+        {
+            text = text.Replace(',', '.');
+            return Double.Parse(text, NumberStyles.Any, CultureInfo.InvariantCulture);
         }
 
     }
