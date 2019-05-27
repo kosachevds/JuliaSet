@@ -94,8 +94,8 @@ namespace JuliaSet
             var countRatio = (double)count / maxIteration;
             return Color.FromArgb(
                 255,
-                Convert.ToByte(255 * countRatio),
                 Convert.ToByte(255 * (1 - countRatio)),
+                Convert.ToByte(255 * countRatio),
                 Convert.ToByte(255 * Math.Min(1, ratioZR))
             );
         }
