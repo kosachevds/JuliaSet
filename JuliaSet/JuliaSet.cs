@@ -74,9 +74,11 @@ namespace JuliaSet
         {
             var count = 0;
             var lastZ = initialZ;
-            while (count < maxIteration && Complex.Abs(lastZ) > 0)
+            var absLastZ = Complex.Abs(lastZ);
+            while (count < maxIteration && absLastZ > 0 && absLastZ <= rValue)
             {
                 lastZ = lastZ * lastZ + this.CValue;
+                absLastZ = Complex.Abs(lastZ);
                 ++count;
             }
             return count;
