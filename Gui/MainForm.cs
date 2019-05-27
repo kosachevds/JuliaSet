@@ -10,6 +10,7 @@ namespace Gui
     public partial class MainForm : Form
     {
         private readonly BackgroundWorker setCreator;
+        private readonly SaveFileDialog dialog;
 
         public MainForm()
         {
@@ -18,6 +19,7 @@ namespace Gui
             this.setCreator = new BackgroundWorker();
             this.setCreator.DoWork += CreateJuliaSet;
             this.setCreator.RunWorkerCompleted += AfterSetCreation;
+            this.dialog = CreateBmpFileDialog();
         }
 
         private void AfterSetCreation(object sender, RunWorkerCompletedEventArgs e)
@@ -102,12 +104,9 @@ namespace Gui
 
         private string SelectFilenameWithDialog()
         {
-            using (var dialog = CreateBmpFileDialog())
+            if (dialog.ShowDialog(this) == DialogResult.OK)
             {
-                if (dialog.ShowDialog(this) == DialogResult.OK)
-                {
-                    return dialog.FileName;
-                }
+                return dialog.FileName;
             }
             return String.Empty;
         }
@@ -118,7 +117,6 @@ namespace Gui
             {
                 Filter = "Bitmap Images | *.bmp",
                 RestoreDirectory = true,
-                InitialDirectory = AppDomain.CurrentDomain.BaseDirectory
             };
         }
 
@@ -155,5 +153,9 @@ namespace Gui
             return Double.Parse(text, NumberStyles.Any, CultureInfo.InvariantCulture);
         }
 
+        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            this.dialog.Dispose();
+        }
     }
 }
