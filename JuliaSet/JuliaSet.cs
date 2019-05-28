@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Numerics;
 using System.Threading.Tasks;
@@ -7,13 +8,14 @@ namespace JuliaSet
 {
     public class JuliaSet
     {
-        private const int MaxTaskCount = 12;
+        private readonly int MaxTaskCount;
 
         private Complex CValue { get; }
 
         public JuliaSet(Complex cValue)
         {
             this.CValue = cValue;
+            this.MaxTaskCount = Environment.ProcessorCount;
         }
 
         public void Create(string filename, int maxIteration, int width, int height)
@@ -39,35 +41,46 @@ namespace JuliaSet
 
             var imagMin = -rValue;
             var imagMax = rValue;
-            var imapStep = (imagMax - imagMin) / bitmap.Height;
+            var imagStep = (imagMax - imagMin) / bitmap.Height;
 
             int width = bitmap.Width;
             int height = bitmap.Height;
-
-            var tasks = new Task[MaxTaskCount];
-            var pixelsPerTask = width / MaxTaskCount;
+            var tasks = new List<Task<Color[,]>>(MaxTaskCount);
+            var columnsPerTask = width / MaxTaskCount;
             for (int taskId = 0; taskId < MaxTaskCount; ++taskId) {
-                var firstColumn = taskId * pixelsPerTask;
-                var lastColumn = firstColumn + pixelsPerTask;
-                tasks[taskId] = Task.Run(() => {
+                var firstColumn = taskId * columnsPerTask;
+                var lastColumn = firstColumn + columnsPerTask;
+                tasks.Add(Task.Run(() =>
+                {
+                    var colors = new Color[columnsPerTask, height];
                     for (int i = firstColumn; i < lastColumn; ++i) {
-                        var xCoordinate = width - i - 1;
+                        var iShifted = i - firstColumn;
                         var real = realMin + i * realStep;
                         for (int j = 0; j < height; ++j) {
-                            var imag = imagMin + j * imapStep;
+                            var imag = imagMin + j * imagStep;
                             var zij = new Complex(real, imag);
                             var count = CountIterations(ref zij, maxIteration, rValue);
                             var ratioZR = Complex.Abs(zij) / rValue;
-                            var color = GetColor(count, maxIteration, ratioZR);
-                            lock (bitmap)
-                            {
-                                bitmap.SetPixel(xCoordinate, j, color);
-                            }
+                            colors[iShifted, j] = GetColor(count, maxIteration, ratioZR);
                         }
                     }
-                });
+                    return colors;
+                }));
             }
-            Task.WaitAll(tasks);
+
+            for (int taskId = 0; taskId < tasks.Count; ++taskId)
+            {
+                var offset = taskId * columnsPerTask;
+                var colors = tasks[taskId].Result;
+                for (int i = 0; i < colors.GetLength(0); ++i)
+                {
+                    var x = width - (i + offset) - 1;
+                    for (int j = 0; j < colors.GetLength(1); ++j)
+                    {
+                        bitmap.SetPixel(x, j, colors[i, j]);
+                    }
+                }
+            }
         }
 
         private int CountIterations(ref Complex initialZ, int maxIteration, double rValue)
