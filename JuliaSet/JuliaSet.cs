@@ -54,7 +54,7 @@ namespace JuliaSet
                         var xCoordinate = width - i - 1;
                         var real = realMin + i * realStep;
                         for (int j = 0; j < height; ++j) {
-                            var imag = realMin + j * imapStep;
+                            var imag = imagMin + j * imapStep;
                             var zij = new Complex(real, imag);
                             var count = CountIterations(ref zij, maxIteration, rValue);
                             var ratioZR = Complex.Abs(zij) / rValue;
