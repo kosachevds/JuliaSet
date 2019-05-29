@@ -8,15 +8,19 @@ namespace JuliaSet
 {
     public class JuliaSet
     {
-        private int MaxTaskCount { get; }
+        private int ProcessorCount { get; }
         private Complex MappingParameter { get; }
         private double Limit { get; }
+        private double ImagMin { get; }
+        private double RealMin { get; }
 
         public JuliaSet(Complex mappingParameter)
         {
             this.MappingParameter = mappingParameter;
-            this.MaxTaskCount = Environment.ProcessorCount;
+            this.ProcessorCount = Environment.ProcessorCount;
             this.Limit = ComputeLimit(mappingParameter);
+            this.RealMin = -Limit;
+            this.ImagMin = -Limit;
         }
 
         public void Create(string filename, int maxIteration, int width, int height)
@@ -34,36 +38,40 @@ namespace JuliaSet
 
         private void PlotOnBitmap(Bitmap bitmap, int maxIteration)
         {
-            var realMin = -Limit;
-            var realStep = 2 * Limit / bitmap.Width;
+            var tasks = CreateTasks(bitmap.Width, bitmap.Height, maxIteration);
+            FillBitmap(tasks, bitmap);
+        }
 
-            var imagMin = -Limit;
-            var imagStep = 2 * Limit / bitmap.Height;
-
-            int height = bitmap.Height;
-            var tasks = new List<Task<Color[,]>>(MaxTaskCount);
-            var columnsPerTask = bitmap.Width / MaxTaskCount;
-            for (int taskId = 0; taskId < MaxTaskCount; ++taskId) {
+        private List<Task<Color[,]>> CreateTasks(int width, int height, int maxIteration)
+        {
+            var realStep = 2 * Limit / width;
+            var imagStep = 2 * Limit / height;
+            var columnsPerTask = width / ProcessorCount;
+            var tasks = new List<Task<Color[,]>>(ProcessorCount);
+            for (int taskId = 0; taskId < ProcessorCount; ++taskId)
+            {
                 var firstColumn = taskId * columnsPerTask;
-                var lastColumn = Math.Min(bitmap.Width, firstColumn + columnsPerTask);
+                var lastColumn = Math.Min(width, firstColumn + columnsPerTask);
                 tasks.Add(Task.Run(() =>
                 {
+                    // TODO: functiom 'CreateTask'
                     var colors = new Color[lastColumn - firstColumn, height];
-                    for (int i = firstColumn; i < lastColumn; ++i) {
+                    for (int i = firstColumn; i < lastColumn; ++i)
+                    {
                         var iShifted = i - firstColumn;
-                        var real = realMin + i * realStep;
-                        for (int j = 0; j < height; ++j) {
-                            var imag = imagMin + j * imagStep;
+                        var real = RealMin + i * realStep;
+                        for (int j = 0; j < height; ++j)
+                        {
+                            var imag = ImagMin + j * imagStep;
                             var zij = new Complex(real, imag);
                             var count = CountIterations(zij, maxIteration);
-                            var ratioZR = Complex.Abs(zij) / Limit;
-                            colors[iShifted, j] = GetColor(count, maxIteration, ratioZR);
+                            colors[iShifted, j] = GetColor(count, maxIteration);
                         }
                     }
                     return colors;
                 }));
             }
-            FillBitmap(tasks, bitmap, columnsPerTask);
+            return tasks;
         }
 
         private int CountIterations(Complex initialZ, int maxIteration)
@@ -80,12 +88,12 @@ namespace JuliaSet
             return count;
         }
 
-        private static void FillBitmap(IReadOnlyList<Task<Color[,]>> tasks, Bitmap bitmap, int columnsPerTask)
+        private static void FillBitmap(IReadOnlyList<Task<Color[,]>> tasks, Bitmap bitmap)
         {
-            for (int taskId = 0; taskId < tasks.Count; ++taskId)
+            var offset = 0;
+            foreach (var task in tasks)
             {
-                var offset = taskId * columnsPerTask;
-                var colors = tasks[taskId].Result;
+                var colors = task.Result;
                 for (int i = 0; i < colors.GetLength(0); ++i)
                 {
                     var x = bitmap.Width - (i + offset) - 1;
@@ -94,6 +102,7 @@ namespace JuliaSet
                         bitmap.SetPixel(x, j, colors[i, j]);
                     }
                 }
+                offset += colors.GetLength(0);
             }
         }
 
@@ -102,14 +111,14 @@ namespace JuliaSet
             return (1 + Math.Sqrt(1 + 4 * Complex.Abs(parameter))) / 2;
         }
 
-        private static Color GetColor(int count, int maxIteration, double ratioZR)
+        private static Color GetColor(int count, int maxIteration)
         {
             var countRatio = (double)count / maxIteration;
             return Color.FromArgb(
                 255,
                 Convert.ToByte(255 * (1 - countRatio)),
                 Convert.ToByte(255 * countRatio),
-                Convert.ToByte(255 * Math.Min(1, ratioZR))
+                Convert.ToByte(255 * countRatio)
             );
         }
     }
