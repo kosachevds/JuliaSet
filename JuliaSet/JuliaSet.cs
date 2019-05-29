@@ -8,14 +8,15 @@ namespace JuliaSet
 {
     public class JuliaSet
     {
-        private readonly int MaxTaskCount;
+        private int MaxTaskCount { get; }
+        private Complex MappingParameter { get; }
+        private double Limit { get; }
 
-        private Complex CValue { get; }
-
-        public JuliaSet(Complex cValue)
+        public JuliaSet(Complex mappingParameter)
         {
-            this.CValue = cValue;
+            this.MappingParameter = mappingParameter;
             this.MaxTaskCount = Environment.ProcessorCount;
+            this.Limit = ComputeLimit(mappingParameter);
         }
 
         public void Create(string filename, int maxIteration, int width, int height)
@@ -33,48 +34,61 @@ namespace JuliaSet
 
         private void PlotOnBitmap(Bitmap bitmap, int maxIteration)
         {
-            var rValue = this.ComputeRValue();
+            var realMin = -Limit;
+            var realStep = 2 * Limit / bitmap.Width;
 
-            var realMin = -rValue;
-            var realMax = rValue;
-            var realStep = (realMax - realMin) / bitmap.Width;
+            var imagMin = -Limit;
+            var imagStep = 2 * Limit / bitmap.Height;
 
-            var imagMin = -rValue;
-            var imagMax = rValue;
-            var imagStep = (imagMax - imagMin) / bitmap.Height;
-
-            int width = bitmap.Width;
             int height = bitmap.Height;
             var tasks = new List<Task<Color[,]>>(MaxTaskCount);
-            var columnsPerTask = width / MaxTaskCount;
+            var columnsPerTask = bitmap.Width / MaxTaskCount;
             for (int taskId = 0; taskId < MaxTaskCount; ++taskId) {
                 var firstColumn = taskId * columnsPerTask;
-                var lastColumn = firstColumn + columnsPerTask;
+                var lastColumn = Math.Min(bitmap.Width, firstColumn + columnsPerTask);
                 tasks.Add(Task.Run(() =>
                 {
-                    var colors = new Color[columnsPerTask, height];
+                    var colors = new Color[lastColumn - firstColumn, height];
                     for (int i = firstColumn; i < lastColumn; ++i) {
                         var iShifted = i - firstColumn;
                         var real = realMin + i * realStep;
                         for (int j = 0; j < height; ++j) {
                             var imag = imagMin + j * imagStep;
                             var zij = new Complex(real, imag);
-                            var count = CountIterations(ref zij, maxIteration, rValue);
-                            var ratioZR = Complex.Abs(zij) / rValue;
+                            var count = CountIterations(zij, maxIteration);
+                            var ratioZR = Complex.Abs(zij) / Limit;
                             colors[iShifted, j] = GetColor(count, maxIteration, ratioZR);
                         }
                     }
                     return colors;
                 }));
             }
+            FillBitmap(tasks, bitmap, columnsPerTask);
+        }
 
+        private int CountIterations(Complex initialZ, int maxIteration)
+        {
+            var count = 0;
+            var lastZ = initialZ;
+            var absLastZ = Complex.Abs(lastZ);
+            while (count < maxIteration && absLastZ > 0 && absLastZ <= this.Limit)
+            {
+                lastZ = lastZ * lastZ + this.MappingParameter;
+                absLastZ = Complex.Abs(lastZ);
+                ++count;
+            }
+            return count;
+        }
+
+        private static void FillBitmap(IReadOnlyList<Task<Color[,]>> tasks, Bitmap bitmap, int columnsPerTask)
+        {
             for (int taskId = 0; taskId < tasks.Count; ++taskId)
             {
                 var offset = taskId * columnsPerTask;
                 var colors = tasks[taskId].Result;
                 for (int i = 0; i < colors.GetLength(0); ++i)
                 {
-                    var x = width - (i + offset) - 1;
+                    var x = bitmap.Width - (i + offset) - 1;
                     for (int j = 0; j < colors.GetLength(1); ++j)
                     {
                         bitmap.SetPixel(x, j, colors[i, j]);
@@ -83,23 +97,9 @@ namespace JuliaSet
             }
         }
 
-        private int CountIterations(ref Complex initialZ, int maxIteration, double rValue)
+        private static double ComputeLimit(Complex parameter)
         {
-            var count = 0;
-            var lastZ = initialZ;
-            var absLastZ = Complex.Abs(lastZ);
-            while (count < maxIteration && absLastZ > 0 && absLastZ <= rValue)
-            {
-                lastZ = lastZ * lastZ + this.CValue;
-                absLastZ = Complex.Abs(lastZ);
-                ++count;
-            }
-            return count;
-        }
-
-        private double ComputeRValue()
-        {
-            return (1 + Math.Sqrt(1 + 4 * Complex.Abs(this.CValue))) / 2;
+            return (1 + Math.Sqrt(1 + 4 * Complex.Abs(parameter))) / 2;
         }
 
         private static Color GetColor(int count, int maxIteration, double ratioZR)
