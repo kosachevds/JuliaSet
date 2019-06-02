@@ -4,33 +4,26 @@ using System.Drawing;
 using System.Globalization;
 using System.Numerics;
 using System.Windows.Forms;
+using JuliaSet;
 
 namespace Gui
 {
     public partial class MainForm : Form
     {
         private readonly BackgroundWorker setCreator;
-        private readonly SaveFileDialog dialog;
 
         public MainForm()
         {
             InitializeComponent();
-            this.FormBorderStyle = FormBorderStyle.FixedDialog;
             this.setCreator = new BackgroundWorker();
             this.setCreator.DoWork += CreateJuliaSet;
             this.setCreator.RunWorkerCompleted += AfterSetCreation;
-            this.dialog = CreateBmpFileDialog();
         }
 
         private void AfterSetCreation(object sender, RunWorkerCompletedEventArgs e)
         {
             this.btnCreate.Enabled = true;
-            var bitmap = (Bitmap) e.Result;
-            var filename = this.SelectFilenameWithDialog();
-            if (!String.IsNullOrEmpty(filename))
-            {
-                bitmap.Save(filename);
-            }
+            new SetViewForm((Bitmap)e.Result).Show();
         }
 
         private void CreateJuliaSet(object sender, DoWorkEventArgs e)
@@ -102,24 +95,6 @@ namespace Gui
             return (int) ParseUIntControl(this.tbMaxIteration, "Max Iteration");
         }
 
-        private string SelectFilenameWithDialog()
-        {
-            if (dialog.ShowDialog(this) == DialogResult.OK)
-            {
-                return dialog.FileName;
-            }
-            return String.Empty;
-        }
-
-        private static SaveFileDialog CreateBmpFileDialog()
-        {
-            return new SaveFileDialog
-            {
-                Filter = "Bitmap Images | *.bmp",
-                RestoreDirectory = true,
-            };
-        }
-
         private static int ParseSizeControl(Control control)
         {
             return (int) ParseUIntControl(control, "Image size");
@@ -153,9 +128,5 @@ namespace Gui
             return Double.Parse(text, NumberStyles.Any, CultureInfo.InvariantCulture);
         }
 
-        private void MainForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            this.dialog.Dispose();
-        }
     }
 }
